@@ -1,5 +1,5 @@
 from ElectraDataModule import *
-from cpuEBClassification import *
+from ElectraBinaryClassification import *
 
 if __name__ == "__main__" :
     model = ElectraClassification(learning_rate=0.0001)
