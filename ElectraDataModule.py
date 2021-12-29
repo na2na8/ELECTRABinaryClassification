@@ -19,7 +19,6 @@ from transformers import ElectraForSequenceClassification, ElectraTokenizer, Ada
 class ElectraClassificationDataset(Dataset) :
     def __init__(self, path, sep, doc_col, label_col, max_length, 
                 num_workers=1, labels_dict=None) :
-        self.dataset = pd.read_csv(path, sep=sep)
         self.tokenizer = ElectraTokenizer.from_pretrained("monologg/koelectra-small-v3-discriminator")
 
         self.max_length = max_length
@@ -32,10 +31,13 @@ class ElectraClassificationDataset(Dataset) :
         # ex : {True : 1, False : 0}
         self.labels_dict = labels_dict
 
+        # dataset
+        df = pd.read_csv(path, sep=sep)
         # nan 제거
-        self.dataset = self.dataset.dropna(axis=0)
+        df = df.dropna(axis=0)
         # 중복제거
-        self.dataset.drop_duplicates(subset=[self.doc_col], inplace=True)
+        df.drop_duplicates(subset=[self.doc_col], inplace=True)
+        self.dataset = df
 
     def __len__(self) :
         return len(self.dataset)
@@ -54,7 +56,7 @@ class ElectraClassificationDataset(Dataset) :
         return processed
 
     def __getitem__(self, idx) :
-        document = self.cleanse(self.dataset[self.doc_col][idx])
+        document = self.cleanse(self.dataset[self.doc_col].iloc[idx])
         inputs = self.tokenizer(
             document,
             return_tensors='pt',
@@ -65,9 +67,9 @@ class ElectraClassificationDataset(Dataset) :
         )
 
         if self.labels_dict :
-            label = self.labels_dict[self.dataset[self.label_col][idx]]
+            label = self.labels_dict[self.dataset[self.label_col].iloc[idx]]
         else :
-            label = self.dataset[self.label_col][idx]
+            label = self.dataset[self.label_col].iloc[idx]
 
         return {
             'input_ids' : inputs['input_ids'][0],
@@ -98,7 +100,7 @@ class ElectraClassificationDataModule(pl.LightningDataModule) :
                                             max_length = self.max_length, labels_dict=self.labels_dict)
 
     def train_dataloader(self) :
-        train = DataLoader(self.set_train, batch_size=self.batch_size, num_workers=self.num_workers, shuffle=True)
+        train = DataLoader(self.set_train, batch_size=self.batch_size, num_workers=self.num_workers, shuffle=False)
         return train
     
     def val_dataloader(self) :
