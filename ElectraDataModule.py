@@ -100,7 +100,7 @@ class ElectraClassificationDataModule(pl.LightningDataModule) :
                                             max_length = self.max_length, labels_dict=self.labels_dict)
 
     def train_dataloader(self) :
-        train = DataLoader(self.set_train, batch_size=self.batch_size, num_workers=self.num_workers, shuffle=False)
+        train = DataLoader(self.set_train, batch_size=self.batch_size, num_workers=self.num_workers, shuffle=True)
         return train
     
     def val_dataloader(self) :
